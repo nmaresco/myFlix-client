@@ -1,68 +1,69 @@
+// myFlix-client/src/main-view/main-view.jsx
 import React from 'react';
+import axios from 'axios';
+
+import { LoginView } from '../login-view/login-view';
 import { MovieCard } from '../movie-card/movie-card';
 import { MovieView } from '../movie-view/movie-view';
-import axios from 'axios'
 
-export class MainView extends React.Component
-{
-    constructor(){
-        super();
-        this.state = {
-            movies: [{
-              Title: "Vertigo",
-              Description: "A former San Francisco police detective juggles wrestling with his personal demons and becoming obsessed with the hauntingly beautiful woman he has been hired to trail.",
-              ImagePath: "http://cdn8.openculture.com/wp-content/uploads/2014/02/Vertigomovie_restoration.jpg"
-            },{
-              Title: "The Birds",
-              Description: "The birds go all crazy and start attacking the town folk. It's a bad time.",
-              ImagePath: "https://tse4.mm.bing.net/th?id=OIP.BCbQQYSYf0QB2wka-B5VCQHaLX&pid=Api&P=0"
-            },
-            {
-              Title: "Meet the Fockers",
-              Description: "All hell breaks loose when the Byrnes family meets the Focker family for the first time.",
-              ImagePath: "https://img.moviesrankings.com/t/p/w1280/6q8woibxmiyKTeMyCxl9W7GL6I6.jpg"
-            }],
-            selectedMovie: null
-        }
-    }
-    setSelectedMovie(newSelectedMovie) {
-      this.setState({
-        selectedMovie: newSelectedMovie
+export class MainView extends React.Component {
+
+  constructor() {
+    super();
+// Initial state is set to null
+    this.state = {
+      movies: [],
+      selectedMovie: null,
+      user: null
+    };
+  }
+
+  componentDidMount() {
+    axios.get('https://mymovieindex.herokuapp.com/movies')
+      .then(response => {
+        this.setState({
+          movies: response.data
+        });
+      })
+      .catch(error => {
+        console.log(error);
       });
-    }
+  }
+  /*When a movie is clicked, this function is invoked and updates the state of the `selectedMovie` *property to that movie*/
 
-    // componentDidMount() {
-    //   axios.get('http://localhost:8080/movies')
-    //   .then((response) => {
-    //     console.log("response: ", response)
-    //     console.log("response.data: ", response.data)
-    //     this.setState({
-    //       movies: response.data,
-    //       selectedMovie: null
-    //     })
-    //   }).catch((err) => {
-    //     console.log("error: ", err)
-    //   })
-    // }
+  setSelectedMovie(movie) {
+    this.setState({
+      selectedMovie: movie
+    });
+  }
 
-    render() {
-      const { movies, selectedMovie } = this.state;
-  
-  
-      if (movies.length === 0) return <div className="main-view">The list is empty!</div>;
-  
-      return (
-        <div className="main-view">
-          {selectedMovie
-            ? <MovieView movie={selectedMovie} onBackClick={newSelectedMovie => { this.setSelectedMovie(newSelectedMovie); }}/>
-            : movies.map(movie => (
-              <MovieCard key={movie._id} movie={movie} onMovieClick={(movie) => { this.setSelectedMovie(movie) }}/>
-            ))
-          }
-        </div>
-      );
-    }
+/* When a user successfully logs in, this function updates the `user` property in state to that *particular user*/
+
+  onLoggedIn(user) {
+    this.setState({
+      user
+    });
+  }
+
+   render() {
+    const { movies, selectedMovie, user } = this.state;
+/* If there is no user, the LoginView is rendered. If there is a user logged in, the user details are *passed as a prop to the LoginView*/
+if (!user) return <LoginView onLoggedIn={user => this.onLoggedIn(user)} />;
+
+// Before the movies have been loaded
+if (movies.length === 0) return <div className="main-view" />;
+
+return (
+  <div className="main-view">
+    {/*If the state of `selectedMovie` is not null, that selected movie will be returned otherwise, all *movies will be returned*/}
+    {selectedMovie
+      ? <MovieView movie={selectedMovie} onBackClick={newSelectedMovie => { this.setSelectedMovie(newSelectedMovie); }}/>
+      : movies.map(movie => (
+        <MovieCard key={movie._id} movie={movie} onMovieClick={(newSelectedMovie) => { this.setSelectedMovie(newSelectedMovie) }}/>
+        ))
+        }
+      </div>
+    );
+  }
+
 }
-
-
-export default MainView;
